@@ -25,6 +25,9 @@
 
     .PARAMETER ShowOnShift 
     Specifies whether the label should only be show when combining shift with right click.
+    
+    .PARAMETER Icon
+    Specifies the path to the icon that will be displayed on the label.
 
     .INPUTS
     Yes. Every parameter can be introduced from a pipeline as a named argument.
@@ -55,13 +58,19 @@ param (
     [Parameter(ValueFromPipelineByPropertyName)]
     [string]$contextMenuType,
     [Parameter(ValueFromPipelineByPropertyName)]
-    [switch]$ShowOnShift
+    [switch]$ShowOnShift,
+    [Parameter(ValueFromPipelineByPropertyName)]
+    [string]$Icon=$null
 )
 
 begin {
     # Any error should stop the script's execution
     $ErrorActionPreference = 'Stop'
 
+    function Test-IsNullOrEmpty{
+        param ([string]$it)
+        $it -eq $null -or $it -match "^\s*$"
+    }
     $locationForAnyFileContextMenu = 'registry::hkey_current_user\software\classes\*\shell\'
     $locationForDirectoryBackgroundContextMenu = 'registry::hkey_current_user\Software\Classes\directory\Background\shell\'
     $locationForDirectoryContextMenu = 'registry::hkey_current_user\Software\Classes\directory\shell\'
@@ -71,7 +80,7 @@ begin {
 
 process {
     # If registryName is not set or is empty, then it matches contextMenuName with no spaces
-    if ($registryName -eq $null -or $registryName -match "^\s*$") {
+    if (Test-IsNullOrEmpty $registryName) {
         $registryName = $contextMenuName -replace "\s+",""
     }
 
@@ -96,6 +105,9 @@ process {
     if ($ShowOnShift) {
         New-ItemProperty -Path . -PropertyType String -Name 'Extended' -Value $null | Out-Null
     }
+    if (-not (Test-IsNullOrEmpty $Icon)) {
+        New-ItemProperty -Path . -PropertyType String -Name 'Icon' -Value $Icon | Out-Null
+    }   
     New-Item -ItemType Directory -Path ".\command" | Out-Null
     Set-Location ".\command" | Out-Null
     New-ItemProperty -Path . -PropertyType String -Name '(default)' -Value $command | Out-Null
