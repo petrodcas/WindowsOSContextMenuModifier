@@ -93,4 +93,6 @@ process {
 
 }
 
-end {}
+end {
+	$ErrorActionPreference = 'Continue'
+}
